@@ -1,0 +1,119 @@
+---
+title: "R Cheatsheet"
+output: html_document
+---
+
+Kate's personal log of interesting and useful R snippets
+
+## Data Wrangling
+### Data Input Basics
+Creating a simple dataframe for example purposes
+```{r}
+Location <- c("New York", "London", "new york", "London")
+Product <- c("Tea", "Coffee", "Coffee", NA)
+Revenue <- c("USD 10000", "5000", "6,500", "$7850")
+YearFounded <- c(1985, 2001, NA, NA)
+SampleSet <- data.frame(Location, Product, Revenue, YearFounded, stringsAsFactors=FALSE)
+SampleSet
+```
+
+Saving a copy of the dataframe as .csv (comma-separated) data
+```{r}
+write.csv(SampleSet, "SampleSet.csv")
+```
+
+Reading in .csv (comma-separated) data
+```{r}
+NewSampleSet <- read.csv("SampleSet.csv")
+NewSampleSet
+```
+
+Reading in .tsv (tab-separated) data
+```{r}
+```
+
+### Looking at Basic Structure
+Show the dimensions of the dataframe
+```{r}
+dim(SampleSet)
+```
+
+See the distributions of values for a certain field
+```{r}
+table(SampleSet$Location)
+```
+
+List all unique values for a certain field
+```{r}
+unique(SampleSet$Location)
+```
+
+### Column Headings
+Listing all column headings
+```{r}
+names(SampleSet)
+```
+
+Renaming a specific column heading
+```{r}
+```
+
+Substituting new column names using rename()
+```{r}
+```
+
+### Understanding structure of individual columns
+See now many non-NA values are contained within a column
+```{r}
+length(which(!is.na(SampleSet$Product)))
+```
+
+### Cleaning up content
+Duplicating a field in the dataset (but giving it a new name)
+```{r}
+SampleSet$OtherLocation <- SampleSet$Location
+SampleSet
+```
+
+Delete a field from the dataset
+```{r}
+SampleSet$OtherLocation <- NULL
+SampleSet
+```
+
+Convert all contents of a column to proper case
+```{r}
+SampleSet$Location
+
+#Add a function to make proper case
+properCase <- function(x) {
+  lower <- tolower(x)
+  s <- strsplit(lower, " ")[[1]]
+  paste(toupper(substring(s, 1,1)), substring(s, 2),
+      sep="", collapse=" ")
+}
+#Apply this function to a column
+SampleSet$LocationProper <- sapply(SampleSet$Location, properCase)
+
+SampleSet$LocationProper
+```
+
+Extract the digits in a column and make column into an integer column (by replacing all non-digit characters with blank space)
+```{r}
+SampleSet$Revenue <- as.integer(gsub("[^0-9]", "", SampleSet$Revenue))
+SampleSet
+```
+
+## Plots
+### Simple Plots in Base R
+Show a histogram of the distribution of values
+```{r}
+hist(SampleSet$Revenue)
+```
+
+Same as previous, but with a lot more bins to the histogram
+```{r}
+hist(SampleSet$Revenue, breaks=100)
+```
+
+### Simple Plots Using ggplot2
