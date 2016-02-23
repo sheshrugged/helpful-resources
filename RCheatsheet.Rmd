@@ -1,18 +1,19 @@
 ---
 title: "R Cheatsheet"
-output: html_document
+output: pdf_document
 ---
-
 Kate's personal log of interesting and useful R snippets
+
+Last updated: 23Feb16
 
 ## Data Wrangling
 ### Data Input Basics
 Creating a simple dataframe for example purposes
 ```{r}
-Location <- c("New York", "London", "new york", "London")
-Product <- c("Tea", "Coffee", "Coffee", NA)
-Revenue <- c("USD 10000", "5000", "6,500", "$7850")
-YearFounded <- c(1985, 2001, NA, NA)
+Location <- c("New York", "London", "new york", "London", "London")
+Product <- c("Tea", "Coffee", "Coffee", NA, "Coffee")
+Revenue <- c("USD 10000", "5000", "6,500", "$7850", "300")
+YearFounded <- c(1985, 2001, NA, NA, 1996)
 SampleSet <- data.frame(Location, Product, Revenue, YearFounded, stringsAsFactors=FALSE)
 SampleSet
 ```
@@ -25,17 +26,29 @@ write.csv(SampleSet, "SampleSet.csv")
 Reading in .csv (comma-separated) data
 ```{r}
 NewSampleSet <- read.csv("SampleSet.csv")
+
 NewSampleSet
 ```
 
 Reading in .tsv (tab-separated) data
 ```{r}
+Football <- read.table("Football.tsv", header=TRUE, sep = "\t")
 ```
 
 ### Looking at Basic Structure
 Show the dimensions of the dataframe
 ```{r}
 dim(SampleSet)
+```
+
+Show the top few rows of content in a dataframe
+```{r}
+head(Football)
+```
+
+Show a simple summary of each field in a dataframe
+```{r}
+summary(Football)
 ```
 
 See the distributions of values for a certain field
@@ -54,12 +67,24 @@ Listing all column headings
 names(SampleSet)
 ```
 
-Renaming a specific column heading
-```{r}
-```
-
 Substituting new column names using rename()
 ```{r}
+#Creating a vector of new column names (in any order), with old column names as the labels
+FootballNames <- c("Y"= "Points",
+           "X5" = "Shots",
+           "X7" = "Box",
+           "X11" = "Passes",
+           "X15" = "Crosses",
+           "X" = "Team",
+           "X18" = "GoalsConceded",
+           "X23" = "YellowCards")
+FootballNames
+#Load the 'plyr' package
+library(plyr)
+#Replace existing column names using plyr package
+Football <- rename(Football, FootballNames)
+#Show top lines of data to verify it has been read correctly
+head(Football)
 ```
 
 ### Understanding structure of individual columns
@@ -116,4 +141,93 @@ Same as previous, but with a lot more bins to the histogram
 hist(SampleSet$Revenue, breaks=100)
 ```
 
-### Simple Plots Using ggplot2
+Boxplot of a variable
+```{r}
+boxplot(Football$Points, ylab = "Points Scored")
+```
+
+Boxplot of a variable, separated by the factor categories of another variable
+```{r}
+boxplot(Football$Points ~ Football$Tiers, ylab = "Points Scored", xlab = "Tier")
+```
+
+Plot a QQ plot to see if a field is distributed normally
+```{r}
+qqnorm(Football$Shots, main = "Normal Q-Q Plot: Ratio of Short to Long Passes")
+qqline(Football$Shots)
+```
+
+### Plots with ggplot2
+
+### Fancier Plots from Other Packages
+A pretty scatterplot matrix using the *cars* package
+```{r}
+library(car)
+spm(~ Points + Shots + Box + Passes, data = Football, smoother = FALSE)
+```
+
+Same as above but where factors from another fields are used to colour-code the dots, and with smoothed trend lines
+```{r}
+library(car)
+spm(~ Points + Shots + Box + Passes | Tiers, data = Football)
+```
+
+## Statistical Tools
+### Statistical Tests and ANOVA
+Shapiro-Wilk test for normal distribution
+```{r}
+shapiro.test(Football$Passes)
+```
+
+ANOVA One-Way test on a variable across categories (described by a factor fariable)
+```{r}
+oneway.test(Football$Points ~ Football$Tiers)
+```
+
+### Correlation
+Output a Pearson correlation matrix (after reducing the default number of digits shown)
+```{r}
+options(digits = 3)
+cor(Football[,2:5])
+#Reset digits options back to original
+options(digits = 7)
+```
+
+Plot a visual form of the Pearson correlation matrix using the *ellipse* package
+```{r}
+library(ellipse)
+CorMatrix <- cor(Football[,2:5])
+#Make the plot but modify the margins slightly
+plotcorr(CorMatrix, mar = c(0.1, 0.1, 0.5, 0.1))
+```
+
+Test the correlation between two fields (Null hypothesis: no correlation)
+```{r}
+cor.test(Football$Points, Football$Passes)
+```
+
+### Linear Regression
+Building a linear regression model and summarising it
+```{r}
+LinearReg <- lm(Points ~ Passes + GoalsConceded, data=Football)
+summary(LinearReg)
+```
+
+Base R functionality to plot regression results
+```{r}
+plot(LinearReg)
+```
+
+### Principal Component Analysis
+With the *FactoMineR* package, perform PCA and plot the cumulative percentage of variance gained with each eigenvector
+```{r}
+library(FactoMineR)
+FootballPC <- PCA(Football[,2:5])
+summary(FootballPC)
+#Plot cumulative variances as explained by the components
+plot(1:4, FootballPC$eig$"cumulative percentage of variance",
+     type = "b",
+     xlab = "Axes 1,2,...,4",
+     ylab = "Cum. % of variance")
+FootballPC$eig$"cumulative percentage of variance"
+```
