@@ -1,6 +1,6 @@
 ---
 title: "R Cheatsheet"
-output: pdf_document
+output: html_document
 ---
 Kate's personal log of interesting and useful R snippets
 
@@ -44,6 +44,11 @@ dim(SampleSet)
 Show the top few rows of content in a dataframe
 ```{r}
 head(Football)
+```
+
+Show the class of each field in a dataframe
+```{r}
+sapply(SampleSet, class)
 ```
 
 Show a simple summary of each field in a dataframe
@@ -128,6 +133,14 @@ Extract the digits in a column and make column into an integer column (by replac
 SampleSet$Revenue <- as.integer(gsub("[^0-9]", "", SampleSet$Revenue))
 SampleSet
 ```
+
+## Grouping and Summarising
+### Using dplyr
+```{r}
+library(dplyr)
+summarise(group_by(SampleSet, LocationProper), count = n(), MeanRev = mean(Revenue, na.rm=TRUE))
+```
+
 
 ## Plots
 ### Simple Plots in Base R
